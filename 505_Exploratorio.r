@@ -35,22 +35,25 @@ plotear_lineas_verdes <- function(){
   
 }
 
-plotear_grafico <- function (data, campo, main_title, x_label, y_label){
+plotear_grafico <- function (data, calcular_min_max, ratio, campo, main_title, x_label, y_label){
 
-  ymin <- min(data$zero_ratio)
-  ymax <- max(data$zero_ratio)
+  if (calcular_min_max) {
+    
+    ymin <- min(get (ratio, data))
+    ymax <- max(get (ratio, data))
   
-  if (ymin == 0) ymin <- -0.1
-  if (ymax == 0) ymax <- 0.1
+    if (ymin == 0) ymin <- -0.1
+    if (ymax == 0) ymax <- 0.1
+  }
   
   plot(
     x = 1:nrow(data),
-    y = data$zero_ratio,
+    y = get (ratio, data),
     type = "o",
     main = paste0(main_title, campo),
     xlab = x_label,
     ylab = y_label,
-    ylim = c(ymin, ymax),
+    ylim = if (calcular_min_max) c(ymin, ymax) else NULL, 
     xaxt = "n"
   )
   
@@ -71,7 +74,7 @@ zeros_ratio <- function(campos, ds){
       foto_mes
     ]
     
-    plotear_grafico(tbl, campo,  "Zeroes ratio  -  ", "Periodo", "Zeroes  ratio")
+    plotear_grafico(tbl, TRUE, "zero_ratio", campo,  "Zeroes ratio  -  ", "Periodo", "Zeroes  ratio")
   }
   
 
@@ -87,7 +90,7 @@ nas_ratio <- function (campos, ds){
       foto_mes
     ]
   
-    plotear_grafico(tbl, campo,  "NAs ratio  -  ", "Periodo", "NAs  ratio")
+    plotear_grafico(tbl, TRUE, "na_ratio", campo,  "NAs ratio  -  ", "Periodo", "NAs  ratio")
 
   }
 }
@@ -107,7 +110,7 @@ promedios <- function (campos, ds){
       foto_mes
     ]
     
-    plotear_grafico(tbl, campo,  "Promedios  -  ", "Periodo", "Promedio")
+    plotear_grafico(tbl, FALSE, "promedio", campo,  "Promedios  -  ", "Periodo", "Promedio")
     
     for (i in 1:nrow(tbl)) {
       if (ceros[i, zero_ratio] > 0.99 & median(ceros[, zero_ratio]) < 0.99) {
@@ -120,7 +123,6 @@ promedios <- function (campos, ds){
   }
   
 }
-
 
 
 promedios_no_cero <- function (campos, ds) {
@@ -137,7 +139,7 @@ promedios_no_cero <- function (campos, ds) {
       foto_mes
     ]
     
-    plotear_grafico(tbl, campo,  "Promedios NO cero  -  ", "Periodo", "Promedio valores no cero")
+    plotear_grafico(tbl, FALSE, "promedio", campo,  "Promedios NO cero  -  ", "Periodo", "Promedio valores no cero")
     
   
     for (i in 1:nrow(tbl)) {
@@ -190,6 +192,20 @@ campos_count <-  c('internet',
                     'thomebanking',
                     'tmobile_app')
 
+
+#------------------------------------------------------------------------------
+# Para cada variable ,
+# grafico para cada mes el ratio de ceros que tiene esa variable
+# el zeroes_ratio de una variable para un mes dado
+# es el cociente entre
+#   la cantidad de veces que la variable toma el valor cero ese mes
+#   y la cantidad total de registros para ese mes
+
+pdf("campos-count-zeroes_ratio.pdf")
+
+zeros_ratio(campos_count, dataset)
+
+dev.off()
 
 
 #------------------------------------------------------------------------------
