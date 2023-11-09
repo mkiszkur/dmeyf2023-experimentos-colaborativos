@@ -31,6 +31,13 @@ plotear_lineas_verdes <- function(){
     lty = c(3, 3, 3),
     lwd = c(1, 1, 1)
   )
+
+  abline(
+    v = c(15, 19, 22),
+    col = c("violet", "violet", "violet"),
+    lty = c(6, 6, 6),
+    lwd = c(2, 2, 2)
+  )
   
   
 }
@@ -184,7 +191,10 @@ campos_cantidad <- c('cprestamos_personales',
                    'ccajas_otras',
                    'catm_trx',
                    'catm_trx_other',
-                   'cmobile_app_trx')
+                   'cmobile_app_trx',
+                   'ctarjeta_visa_transacciones',
+                   'ctarjeta_master_transacciones',
+                   'ctarjeta_debito_transacciones')
 
 
 campos_count <-  c('internet',
