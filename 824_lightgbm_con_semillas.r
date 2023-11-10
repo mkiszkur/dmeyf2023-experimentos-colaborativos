@@ -154,14 +154,13 @@ for (s in PARAM$semillerio){
   
   cat(format(Sys.time(), format = "%Y-%m-%d %H:%M:%S"), " - Inicio modelo de la semilla: ", s, "\n")
   
-  
   # reemplazar la semilla con la siguiente semilla
   PARAM$finalmodel$lgb_basicos$seed = s
   
-  # genero el modelo
   param_completo <- c(PARAM$finalmodel$lgb_basicos,
                       PARAM$finalmodel$optim)
 
+  # genero el modelo
   modelo <- lgb.train(
     data = dtrain,
     param = param_completo,
@@ -193,13 +192,11 @@ for (s in PARAM$semillerio){
 # grabo las sumas de las probabilidades
 escribir_archivo("prediccion_total.txt", sumarizacion)
 
-
 #Me guardo el verdadero valor (1 si era baja+2, 0 sino)
 sumarizacion$real <- realidad$real
 
 # ordeno por probabilidad descendente
 setorder(sumarizacion, -prob)
-
 
 # genero archivos con los "envíos" mejores
 cortes <- seq(8000, 15000, by = 500)
@@ -225,5 +222,6 @@ for (envios in cortes) {
   escribir_archivo(paste0 (PARAM$experimento, "_", envios, ".csv"), sumarizacion[, list(numero_de_cliente, Predicted)])
   
 }
+
 
 cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
