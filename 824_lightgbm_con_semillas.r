@@ -10,6 +10,21 @@ gc() # garbage collection
 require("data.table")
 require("lightgbm")
 
+#-----------------
+#Funciones Auxiliares
+
+escribir_archivo <- function(archivo, tabla) {
+  
+  fwrite(tabla,
+         file = archivo,
+         sep = "\t"
+  )
+  
+  
+}  
+
+
+
 
 # defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
@@ -155,15 +170,7 @@ for (s in PARAM$semillerio){
   #--------------------------------------
   # ahora imprimo la importancia de variables
   tb_importancia <- as.data.table(lgb.importance(modelo))
-  archivo_importancia <- paste0 (s, "_impo.txt")
-  
-  fwrite(tb_importancia,
-         file = archivo_importancia,
-         sep = "\t"
-  )
-  
-  #--------------------------------------
-
+  escribir_archivo(paste0 (s, "_impo.txt"), tb_importancia)
 
 
   # aplico el modelo a los datos nuevos
@@ -172,7 +179,6 @@ for (s in PARAM$semillerio){
     data.matrix(dapply[, campos_buenos, with = FALSE])
   )
   
-
   # genero la tabla de entrega
   tb_entrega <- dapply[, list(numero_de_cliente, foto_mes)]
   tb_entrega[, prob := prediccion]
@@ -180,28 +186,22 @@ for (s in PARAM$semillerio){
   sumarizacion[, prob := prob + prediccion]
 
   # grabo las probabilidad del modelo
-  archivo_prediccion <- paste0 (s, "_prediccion.txt")
-  
-  fwrite(tb_entrega,
-    file = archivo_prediccion,
-    sep = "\t"
-  )
+  escribir_archivo(paste0 (s, "_prediccion.txt"), tb_entrega)
 
 }
 
 # grabo las sumas de las probabilidades
-fwrite(sumarizacion,
-       file = "prediccion_total.txt",
-       sep = "\t"
-)
+escribir_archivo("prediccion_total.txt", sumarizacion)
 
+
+#Me guardo el verdadero valor (1 si era baja+2, 0 sino)
+sumarizacion$real <- realidad$real
 
 # ordeno por probabilidad descendente
-sumarizacion$real <- realidad$real
-print(sumarizacion)
-
 setorder(sumarizacion, -prob)
-# genero archivos con los "envios" mejores
+
+
+# genero archivos con los "envíos" mejores
 cortes <- seq(8000, 15000, by = 500)
 for (envios in cortes) {
   
@@ -210,19 +210,20 @@ for (envios in cortes) {
   sumarizacion[1:envios, Predicted := 1L]
 
   #Calculo la ganancia
-  cuenta  <- sumarizacion [Predicted == 1]
-  cuenta [, gan := ifelse(Predicted == 1 & real == 1, 273000, -7000)]
-  cuenta [, gan_acum := cumsum(gan)]
+  ganancias  <- sumarizacion [Predicted == 1]
+  ganancias [, gan := ifelse(Predicted == 1 & real == 1, 273000, -7000)]
+  ganancias [, gan_acum := cumsum(gan)]
+  
+  last_col <- cuenta[.N, gan_acum]
+  cat ("ganancia: ", last_col, "\n")
   
   #Escribo el archivo con la ganancia
-  fwrite(cuenta,
-         file = paste0(PARAM$experimento, "_", envios, "-cuenta.csv"),
-         sep = ",")
+  escribir_archivo(paste0 (PARAM$experimento, "_", envios, "_ganancias.csv"), ganancias)
+  
+  
   #Escribo el archivo para kaggle
-  fwrite(sumarizacion[, list(numero_de_cliente, Predicted)],
-    file = paste0(PARAM$experimento, "_", envios, ".csv"),
-    sep = ","
-  )
+  escribir_archivo(paste0 (PARAM$experimento, "_", envios, ".csv"), sumarizacion[, list(numero_de_cliente, Predicted)])
+  
 }
 
 cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
