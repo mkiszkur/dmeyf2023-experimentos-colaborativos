@@ -179,8 +179,6 @@ for (s in PARAM$semillerio){
   
   sumarizacion[, prob := prob + prediccion]
 
-
-
   # grabo las probabilidad del modelo
   archivo_prediccion <- paste0 (s, "_prediccion.txt")
   
