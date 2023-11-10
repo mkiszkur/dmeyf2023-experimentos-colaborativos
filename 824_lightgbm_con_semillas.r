@@ -19,7 +19,8 @@ PARAM <- list()
 PARAM$experimento <- "ECS001"
 
 #PARAM$input$dataset <- "./datasets/Competencia_03_EC.csv.gz"
-PARAM$input$dataset <- "./datasets/competencia_03_100.csv.gz"
+#PARAM$input$dataset <- "./datasets/competencia_03_100.csv.gz"
+PARAM$input$dataset <- "./datasets/competencia_03.csv.gz"
 
 
 # meses donde se entrena el modelo
@@ -98,6 +99,9 @@ dataset[, clase01 := ifelse(clase_ternaria %in% c("BAJA+2", "BAJA+1"), 1L, 0L)]
 #--------------------------------------
 
 # los campos que se van a utilizar
+realidad <- dataset[foto_mes == PARAM$input$future, list(numero_de_cliente, foto_mes, clase_ternaria) ]
+realidad[, real := ifelse(clase_ternaria %in% c("CONTINUA", "BAJA+1"), 0L, 1L) ]
+
 campos_buenos <- setdiff(colnames(dataset), c("clase_ternaria", "clase01"))
 
 #--------------------------------------
@@ -125,13 +129,11 @@ dtrain <- lgb.Dataset(
 
 # aplico el modelo a los datos sin clase
 dapply <- dataset[foto_mes == PARAM$input$future]
-print (dapply)
+
 
 #Genero dataset de ceros para acumular las probabilidades
 sumarizacion <- dapply[, list(numero_de_cliente, foto_mes)]
 sumarizacion[, prob := 0]
-print (sumarizacion)
-
 
 for (s in PARAM$semillerio){
   
@@ -189,8 +191,7 @@ for (s in PARAM$semillerio){
 
 }
 
-# grabo las probabilidad del modelo promedio
-
+# grabo las sumas de las probabilidades
 fwrite(sumarizacion,
        file = "prediccion_total.txt",
        sep = "\t"
@@ -198,24 +199,32 @@ fwrite(sumarizacion,
 
 
 # ordeno por probabilidad descendente
-setorder(tb_entrega, -prob)
+sumarizacion$real <- realidad$real
+print(sumarizacion)
 
+setorder(sumarizacion, -prob)
+# genero archivos con los "envios" mejores
+cortes <- seq(8000, 15000, by = 500)
+for (envios in cortes) {
+  
+  #Calculo los que tengo que enviar en funcion del corte actual
+  sumarizacion[, Predicted := 0L]
+  sumarizacion[1:envios, Predicted := 1L]
 
-# genero archivos con los  "envios" mejores
-# deben subirse "inteligentemente" a Kaggle para no malgastar submits
-# si la palabra inteligentemente no le significa nada aun
-# suba TODOS los archivos a Kaggle
-# espera a la siguiente clase sincronica en donde el tema sera explicado
-
-# cortes <- seq(8000, 15000, by = 500)
-# for (envios in cortes) {
-#   tb_entrega[, Predicted := 0L]
-#   tb_entrega[1:envios, Predicted := 1L]
-# 
-#   fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
-#     file = paste0(PARAM$experimento, "_", envios, ".csv"),
-#     sep = ","
-#   )
-# }
+  #Calculo la ganancia
+  cuenta  <- sumarizacion [Predicted == 1]
+  cuenta [, gan := ifelse(Predicted == 1 & real == 1, 273000, -7000)]
+  cuenta [, gan_acum := cumsum(gan)]
+  
+  #Escribo el archivo con la ganancia
+  fwrite(cuenta,
+         file = paste0(PARAM$experimento, "_", envios, "-cuenta.csv"),
+         sep = ",")
+  #Escribo el archivo para kaggle
+  fwrite(sumarizacion[, list(numero_de_cliente, Predicted)],
+    file = paste0(PARAM$experimento, "_", envios, ".csv"),
+    sep = ","
+  )
+}
 
 cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
