@@ -90,7 +90,10 @@ PARAM$finalmodel$lgb_basicos <- list(
 #------------------------------------------------------------------------------
 # Aqui empieza el programa
 
-PARAM$semillerio <- c(100193,100207)
+#TODO: implementar test de Wilcoxon
+PARAM$semillerio <- c(999631, 999653, 999667, 999671, 999683, 999721, 999727, 999749, 999763, 999769)
+
+
 #PARAM$tipo_ejecucion = 'Google Cloud'
 PARAM$tipo_ejecucion = 'local'
 
@@ -211,8 +214,8 @@ for (envios in cortes) {
   ganancias [, gan := ifelse(Predicted == 1 & real == 1, 273000, -7000)]
   ganancias [, gan_acum := cumsum(gan)]
   
-  last_col <- cuenta[.N, gan_acum]
-  cat ("ganancia: ", last_col, "\n")
+  last_col <- ganancias[.N, gan_acum]
+  cat ("ganancia corte", envios, ": ",  last_col, "\n")
   
   #Escribo el archivo con la ganancia
   escribir_archivo(paste0 (PARAM$experimento, "_", envios, "_ganancias.csv"), ganancias)
