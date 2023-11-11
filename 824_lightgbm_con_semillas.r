@@ -25,7 +25,6 @@ escribir_archivo <- function(archivo, tabla) {
 
 
 
-
 # defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM <- list()
@@ -203,6 +202,9 @@ setorder(sumarizacion, -prob)
 
 # genero archivos con los "envíos" mejores
 cortes <- seq(8000, 15000, by = 500)
+ganancias_totales <- data.frame(seq(length(cortes)), cortes)
+ganancias_totales$ganancia = 0
+
 for (envios in cortes) {
   
   #Calculo los que tengo que enviar en funcion del corte actual
@@ -214,8 +216,10 @@ for (envios in cortes) {
   ganancias [, gan := ifelse(Predicted == 1 & real == 1, 273000, -7000)]
   ganancias [, gan_acum := cumsum(gan)]
   
-  last_col <- ganancias[.N, gan_acum]
-  cat ("ganancia corte", envios, ": ",  last_col, "\n")
+  ganancia <- ganancias[.N, gan_acum]
+  cat ("ganancia corte", envios, ": ",  ganancia, "\n")
+  
+  ganancias_totales[which(ganancias_totales$cortes == envios), "ganancia"] <- ganancia
   
   #Escribo el archivo con la ganancia
   escribir_archivo(paste0 (PARAM$experimento, "_", envios, "_ganancias.csv"), ganancias)
@@ -225,6 +229,8 @@ for (envios in cortes) {
   escribir_archivo(paste0 (PARAM$experimento, "_", envios, ".csv"), sumarizacion[, list(numero_de_cliente, Predicted)])
   
 }
+
+escribir_archivo(paste0 (PARAM$experimento, "_ganancias_totales_envios.csv"), ganancias_totales)
 
 
 cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
