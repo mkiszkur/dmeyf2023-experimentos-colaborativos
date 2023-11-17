@@ -30,24 +30,26 @@ escribir_archivo <- function(archivo, tabla) {
 PARAM <- list()
 
 #Experimento <- Experimento Colabortivo Prueba 001
-PARAM$experimento <- "ECS_LGBM_002"
+PARAM$experimento <- "ECS_LGBM_004"
 
 PARAM$input$dataset <- "./datasets/Competencia_03_EC.csv.gz"
 
 
 # meses donde se entrena el modelo
 #PARAM$input$training <- c(202012, 202101, 202102, 202103, 202104, 202105)
-PARAM$input$training <- c(202105)
-PARAM$input$future <- c(202107) # meses donde se aplica el modelo
+PARAM$input$training <- c(202008, 202009, 202010, 202011, 
+                          202012, 202101, 202102,
+                          202103,202104)
+PARAM$input$future <- c(202105) # meses donde se aplica el modelo
 
 PARAM$finalmodel$semilla <- 102191
 
 # hiperparametros intencionalmente NO optimos
-PARAM$finalmodel$optim$num_iterations <- 730
-PARAM$finalmodel$optim$learning_rate <- 0.0323601846272594
-PARAM$finalmodel$optim$feature_fraction <- 0.909773795582897
-PARAM$finalmodel$optim$min_data_in_leaf <- 4637
-PARAM$finalmodel$optim$num_leaves <- 667
+PARAM$finalmodel$optim$num_iterations <- 989
+PARAM$finalmodel$optim$learning_rate <- 0.0393817145898278
+PARAM$finalmodel$optim$feature_fraction <- 0.716190576612675
+PARAM$finalmodel$optim$num_leaves <- 22
+PARAM$finalmodel$optim$min_data_in_leaf <- 15488
 
 
 # Hiperparametros FIJOS de  lightgbm
